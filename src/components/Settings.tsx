@@ -95,6 +95,13 @@ const Settings = () => {
                     id="seconds"
                     type="number"
                     placeholder={seconds.toString()}
+                    onChange={(e) => {
+                      setSeconds(parseInt(e.target.value));
+                      localStorage.setItem(
+                        "seconds",
+                        JSON.stringify(parseInt(e.target.value))
+                      );
+                    }}
                   />
                 </div>
                 The amount of time, in seconds, that should pass between
