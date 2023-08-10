@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -22,6 +22,8 @@ const App = () => {
   const [timer, setTimer] = useState(0);
   const [messages, setMessages] = useState<string[]>([]);
   const { minutes, seconds } = convertSecondsToTime(timer);
+  const timerRef = useRef<NodeJS.Timeout>();
+  const startTimeRef = useRef<number>(0);
 
   const handleDutyChange = (newDuty: string) => {
     setPrevDuty(duty);
@@ -84,12 +86,16 @@ const App = () => {
   };
 
   useEffect(() => {
-    let countdown: NodeJS.Timeout;
-
     if (active) {
-      countdown = setInterval(() => {
-        setTimer((prevValue) => prevValue - 1);
+      startTimeRef.current = performance.now();
+      timerRef.current = setInterval(() => {
+        const elapsedTime = Math.floor(
+          (performance.now() - startTimeRef.current) / 1000
+        );
+        setTimer((prevValue) => prevValue - elapsedTime);
+        startTimeRef.current = performance.now();
       }, 1000);
+
       if (JSON.parse(localStorage.getItem("header") ?? "false")) {
         document.title = `${minutes.toString().padStart(2, "0")}:${seconds
           .toString()
@@ -116,7 +122,7 @@ const App = () => {
     }
 
     return () => {
-      clearInterval(countdown);
+      clearInterval(timerRef.current);
     };
   }, [active, timer, dutyPart]);
 
