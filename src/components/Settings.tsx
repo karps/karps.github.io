@@ -8,17 +8,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useState } from "react";
+
 const Settings = () => {
   const [messageLog, setMessageLog] = useState(true);
   const [continuous, setContinuous] = useState(false);
   const [seconds, setSeconds] = useState(900);
+  const [header, setHeader] = useState(false);
+  const [autoCopy, setAutoCopy] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem("message-log")) {
@@ -33,9 +34,19 @@ const Settings = () => {
       localStorage.setItem("seconds", JSON.stringify(900));
     }
 
+    if (!localStorage.getItem("header")) {
+      localStorage.setItem("header", JSON.stringify(false));
+    }
+
+    if (!localStorage.getItem("auto-copy")) {
+      localStorage.setItem("auto-copy", JSON.stringify(false));
+    }
+
     setMessageLog(JSON.parse(localStorage.getItem("message-log") ?? "true"));
     setContinuous(JSON.parse(localStorage.getItem("continuous") ?? "false"));
     setSeconds(JSON.parse(localStorage.getItem("seconds") ?? "900"));
+    setHeader(JSON.parse(localStorage.getItem("header") ?? "false"));
+    setHeader(JSON.parse(localStorage.getItem("auto-copy") ?? "false"));
   }, []);
 
   return (
@@ -88,6 +99,43 @@ const Settings = () => {
               </div>
               <Separator orientation="horizontal" />
 
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="header"
+                    checked={header}
+                    onCheckedChange={(checked) => {
+                      setHeader(checked);
+                      localStorage.setItem("header", JSON.stringify(checked));
+                    }}
+                  />
+                  <Label htmlFor="header">Show timer in tab title</Label>
+                </div>
+                If enabled, the timer will be shown in the page title.
+              </div>
+              <Separator orientation="horizontal" />
+
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="auto-copy"
+                    checked={autoCopy}
+                    onCheckedChange={(checked) => {
+                      setAutoCopy(checked);
+                      localStorage.setItem(
+                        "auto-copy",
+                        JSON.stringify(checked)
+                      );
+                    }}
+                  />
+                  <Label htmlFor="header">Auto-copy messages</Label>
+                </div>
+                If enabled, message text will be automatically copied to your
+                clipboard. This only works if the window is focused when the
+                message is written.
+              </div>
+
+              <Separator orientation="horizontal" />
               <div className="flex flex-col gap-2">
                 <div className="grid w-full max-w-sm items-center gap-1.5">
                   <Label htmlFor="seconds">Half shift length (seconds)</Label>

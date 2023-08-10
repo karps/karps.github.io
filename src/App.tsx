@@ -10,37 +10,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Clipboard } from "lucide-react";
-import Settings from "./components/Settings";
+import Settings from "@/components/Settings";
+import { convertSecondsToTime } from "@/lib/utils";
+import { duties } from "@/lib/constants";
 
-interface Duty {
-  label: string;
-  acr: string;
-}
-
-const duties: Duty[] = [
-  { label: "Duty Desk Operator", acr: "DDO" },
-  { label: "Front Row", acr: "FR" },
-  { label: "Sentry", acr: "Sentry" },
-  { label: "Sentry Assist", acr: "SA" },
-  { label: "Welcome Desk", acr: "WD" },
-  { label: "Information Desk", acr: "ID" },
-  { label: "Bar Duty", acr: "Bar" },
-  { label: "Lobby Guide", acr: "Lobby" },
-];
-
-type Time = {
-  minutes: number;
-  seconds: number;
-};
-const convertSecondsToTime = (seconds: number): Time => {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-
-  return {
-    minutes,
-    seconds: remainingSeconds,
-  };
-};
 const App = () => {
   const [duty, setDuty] = useState("");
   const [prevDuty, setPrevDuty] = useState("");
@@ -57,6 +30,10 @@ const App = () => {
 
   const writeMessage = (message: string) => {
     const persist = JSON.parse(localStorage.getItem("message-log") ?? "true");
+
+    if (JSON.parse(localStorage.getItem("auto-copy") ?? "false")) {
+      navigator.clipboard.writeText(message);
+    }
 
     if (persist) {
       setMessages((prevMessages) => [...prevMessages, message]);
@@ -77,7 +54,8 @@ const App = () => {
     if (active) {
       setActive(false);
       setDutyPart(0);
-      setTimer(JSON.parse(localStorage.getItem("seconds") ?? "900"));
+      setTimer(0);
+      document.title = "Duty Tracker";
     } else {
       setActive(true);
       setDutyPart(0);
@@ -112,6 +90,13 @@ const App = () => {
       countdown = setInterval(() => {
         setTimer((prevValue) => prevValue - 1);
       }, 1000);
+      if (JSON.parse(localStorage.getItem("header") ?? "false")) {
+        document.title = `${minutes.toString().padStart(2, "0")}:${seconds
+          .toString()
+          .padStart(2, "0")} | Duty Tracker`;
+      } else {
+        document.title = "Duty Tracker";
+      }
     }
 
     if (active && timer === 0 && dutyPart < 2) {
