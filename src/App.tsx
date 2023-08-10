@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -13,6 +13,7 @@ import { Clipboard } from "lucide-react";
 import Settings from "@/components/Settings";
 import { convertSecondsToTime } from "@/lib/utils";
 import { duties } from "@/lib/constants";
+import { setDriftlessInterval, clearDriftless } from "driftless";
 
 const App = () => {
   const [duty, setDuty] = useState("");
@@ -22,8 +23,6 @@ const App = () => {
   const [timer, setTimer] = useState(0);
   const [messages, setMessages] = useState<string[]>([]);
   const { minutes, seconds } = convertSecondsToTime(timer);
-  const timerRef = useRef<NodeJS.Timeout>();
-  const startTimeRef = useRef<number>(0);
 
   const handleDutyChange = (newDuty: string) => {
     setPrevDuty(duty);
@@ -86,16 +85,12 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (active) {
-      startTimeRef.current = performance.now();
-      timerRef.current = setInterval(() => {
-        const elapsedTime = Math.floor(
-          (performance.now() - startTimeRef.current) / 1000
-        );
-        setTimer((prevValue) => prevValue - elapsedTime);
-        startTimeRef.current = performance.now();
-      }, 1000);
+    let countdown: number;
 
+    if (active) {
+      countdown = setDriftlessInterval(() => {
+        setTimer((prevValue) => prevValue - 1);
+      }, 1000);
       if (JSON.parse(localStorage.getItem("header") ?? "false")) {
         document.title = `${minutes.toString().padStart(2, "0")}:${seconds
           .toString()
@@ -122,7 +117,7 @@ const App = () => {
     }
 
     return () => {
-      clearInterval(timerRef.current);
+      clearDriftless(countdown);
     };
   }, [active, timer, dutyPart]);
 
@@ -135,58 +130,61 @@ const App = () => {
     }
   }, [duty]);
   return (
-    <section className="container mx-auto p-4 flex flex-col gap-2 max-w-screen-sm overflow-hidden">
-      <Settings />
-      <Select onValueChange={handleDutyChange}>
-        <SelectTrigger>
-          <SelectValue placeholder="Duty" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectLabel>Duties</SelectLabel>
-            {duties.map((duty) => (
-              <SelectItem value={duty.acr} key={duty.acr}>
-                {duty.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-      <Button
-        variant="secondary"
-        onClick={handleStartTimer}
-        disabled={duty === ""}
-      >
-        {duty === ""
-          ? "Select a duty to start your shift"
-          : active
-          ? "Stop shift"
-          : "Start shift"}
-      </Button>
-      {active && `${minutes} minutes and ${seconds} seconds until next message`}
-      {messages
-        .slice(0)
-        .reverse()
-        .map((message, index) => (
-          <div
-            className="flex items-center justify-between p-2 mb-1 mt-1 overflow-x-auto rounded-lg border bg-slate-900 "
-            key={index}
-          >
-            <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-              {message}
-            </code>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                navigator.clipboard.writeText(message);
-              }}
+    <div className="flex flex-row gap-2 mt-4 justify-center">
+      <section className="flex flex-col gap-4 max-w-screen-sm w-2/6 overflow-hidden">
+        <Settings />
+        <Select onValueChange={handleDutyChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Duty" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Duties</SelectLabel>
+              {duties.map((duty) => (
+                <SelectItem value={duty.acr} key={duty.acr}>
+                  {duty.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <Button
+          variant="secondary"
+          onClick={handleStartTimer}
+          disabled={duty === ""}
+        >
+          {duty === ""
+            ? "Select a duty to start your shift"
+            : active
+            ? "Stop shift"
+            : "Start shift"}
+        </Button>
+        {active &&
+          `${minutes} minutes and ${seconds} seconds until next message`}
+        {messages
+          .slice(0)
+          .reverse()
+          .map((message, index) => (
+            <div
+              className="flex items-center justify-between p-2 mb-1 mt-1 overflow-x-auto rounded-lg border bg-slate-900 "
+              key={index}
             >
-              <Clipboard />
-            </Button>
-          </div>
-        ))}
-    </section>
+              <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+                {message}
+              </code>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  navigator.clipboard.writeText(message);
+                }}
+              >
+                <Clipboard />
+              </Button>
+            </div>
+          ))}
+      </section>
+    </div>
   );
 };
 
