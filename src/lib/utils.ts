@@ -15,3 +15,22 @@ export const convertSecondsToTime = (seconds: number): Time => {
     seconds: remainingSeconds,
   };
 };
+
+export const getCopyString = (part: number, duty: string) => {
+  const d = new Date();
+  const minutes = d.getMinutes().toString().padStart(2, "0");
+  switch (part) {
+    case 0:
+      return `${duty} start @ :${minutes}`;
+    case 1:
+      return `${duty} mid @ :${minutes}`;
+    case 2:
+      if (JSON.parse(localStorage.getItem("continuous") ?? "false")) {
+        return `${duty} start/end @ :${minutes} - looking for confirmations`;
+      } else {
+        return `${duty} end @ :${minutes} - looking for confirmations`;
+      }
+    default:
+      return "error";
+  }
+};

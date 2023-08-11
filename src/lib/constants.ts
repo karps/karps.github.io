@@ -1,5 +1,11 @@
 import { DutySelect } from "@/types/types";
 
+export enum DutyPart {
+  START,
+  MID,
+  END,
+}
+
 export const duties: DutySelect[] = [
   { label: "Duty Desk Operator", acr: "DDO" },
   { label: "Front Row", acr: "FR" },

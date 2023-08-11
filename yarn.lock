@@ -767,6 +767,11 @@
   dependencies:
     "@babel/runtime" "^7.13.10"
 
+"@types/driftless@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@types/driftless/-/driftless-2.0.1.tgz#32b1c700a2846f25d42681bb7cdae7d336bf6251"
+  integrity sha512-Wq8SVDBCXHIWCSwsxxp/j/2B4B17rYLJYF1k0n3CAbodlvav6pMqm+rkGiKwlxiieu8kjjV3Dx81UwP6+upnzA==
+
 "@types/json-schema@^7.0.9":
   version "7.0.12"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.12.tgz#d70faba7039d5fca54c83c7dbab41051d2b6f6cb"
@@ -797,6 +802,11 @@
     "@types/prop-types" "*"
     "@types/scheduler" "*"
     csstype "^3.0.2"
+
+"@types/schedule@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@types/schedule/-/schedule-0.5.0.tgz#a27c4574f13df5eac85e130f1e0c9f1d44118def"
+  integrity sha512-VkYxcNrnLQ3uvxlPl20EWzbPiRICDvjLc0CCMEA1vMNbULlRf+lQdi4QrDB4RtYSa59t3pl+QQAHDgSQQFYnDw==
 
 "@types/scheduler@*":
   version "0.16.3"
@@ -1207,6 +1217,13 @@ doctrine@^3.0.0:
   integrity sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w==
   dependencies:
     esutils "^2.0.2"
+
+driftless@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/driftless/-/driftless-2.0.3.tgz#4378cade7aa8e39dee33faa94413bdc67850d90b"
+  integrity sha512-hSDKsQphnL4O0XLAiyWQ8EiM9suXH0Qd4gMtwF86b5wygGV8r95w0JcA38FOmx9N3LjFCIHLG2winLPNken4Tg==
+  dependencies:
+    present "^0.0.3"
 
 electron-to-chromium@^1.4.477:
   version "1.4.487"
@@ -2071,6 +2088,11 @@ prelude-ls@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.2.1.tgz#debc6489d7a6e6b0e7611888cec880337d316396"
   integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
+
+present@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/present/-/present-0.0.3.tgz#5aefb8a5ddf6b34c65743bf1cde53523aac1c05a"
+  integrity sha512-d0QMXYTKHuAO0n0IfI/x2lbNwybdNWjRQ08hQySzqMQ2M0gwh/IetTv2glkPJihFn+cMDYjK/BiVgcLcjsASgg==
 
 punycode@^2.1.0:
   version "2.3.0"
