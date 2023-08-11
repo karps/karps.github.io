@@ -50,7 +50,8 @@ const App = () => {
   useEffect(() => {
     if (!activeShift) return;
     if (timeLeft > 0) return;
-
+    beep();
+    
     if (dutyPart === DutyPart.END) {
       if (JSON.parse(localStorage.getItem("continuous") ?? "false")) {
         writeMessage(getCopyString(dutyPart, duty));
