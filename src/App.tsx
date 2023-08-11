@@ -85,7 +85,7 @@ const App = () => {
   const changeDuty = (d: string) => {
     const minutes = new Date().getMinutes().toString().padStart(2, "0");
     if (activeShift) {
-      writeMessage(`${duty} > ${d} @ ${minutes}`);
+      writeMessage(`${duty} > ${d} @ :${minutes}`);
     }
 
     setDuty(d);
