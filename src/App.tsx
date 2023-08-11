@@ -11,22 +11,26 @@ import {
 } from "@/components/ui/select";
 import { Clipboard } from "lucide-react";
 import Settings from "@/components/Settings";
-import { convertSecondsToTime } from "@/lib/utils";
-import { duties } from "@/lib/constants";
-import { setDriftlessInterval, clearDriftless } from "driftless";
+import { convertSecondsToTime, getCopyString } from "@/lib/utils";
+import { DutyPart, duties } from "@/lib/constants";
+
+import { worker_script } from "./worker-script.ts";
+const worker = new Worker(worker_script);
 
 const App = () => {
-  const [duty, setDuty] = useState("");
-  const [prevDuty, setPrevDuty] = useState("");
-  const [dutyPart, setDutyPart] = useState(0);
-  const [active, setActive] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const [messages, setMessages] = useState<string[]>([]);
-  const { minutes, seconds } = convertSecondsToTime(timer);
+  const halfShift = parseInt(
+    JSON.parse(localStorage.getItem("seconds") ?? "900")
+  );
 
-  const handleDutyChange = (newDuty: string) => {
-    setPrevDuty(duty);
-    setDuty(newDuty);
+  const [duty, setDuty] = useState("");
+  const [dutyPart, setDutyPart] = useState<DutyPart>(DutyPart.START);
+  const [activeShift, setActiveShift] = useState(false);
+  const [messages, setMessages] = useState<string[]>([]);
+  const [timeLeft, setTimeLeft] = useState(halfShift);
+  const { seconds, minutes } = convertSecondsToTime(timeLeft);
+
+  worker.onmessage = ({ data: { time } }) => {
+    setTimeLeft(halfShift - (time % (halfShift + 1)));
   };
 
   const writeMessage = (message: string) => {
@@ -42,98 +46,69 @@ const App = () => {
       setMessages([message]);
     }
   };
-  const updateDutyPart = () => {
-    setDutyPart((prevValue) => prevValue + 1);
-    setTimer(JSON.parse(localStorage.getItem("seconds") ?? "900"));
-    beep();
-    if (dutyPart > 0) {
-      writeMessage(getCopyString(dutyPart));
-    }
-  };
-
-  const handleStartTimer = () => {
-    if (active) {
-      setActive(false);
-      setDutyPart(0);
-      setTimer(0);
-      document.title = "Duty Tracker";
-    } else {
-      setActive(true);
-      setDutyPart(0);
-      writeMessage(getCopyString(0));
-    }
-  };
-
-  const getCopyString = (dutyP: number) => {
-    const d = new Date();
-    const minutes = d.getMinutes().toString().padStart(2, "0");
-    const part = dutyP || dutyPart;
-    switch (part) {
-      case 0:
-        return `${duty} start @ :${minutes}`;
-      case 1:
-        return `${duty} mid @ :${minutes}`;
-      case 2:
-        if (JSON.parse(localStorage.getItem("continuous") ?? "false")) {
-          return `${duty} start/end @ :${minutes} - looking for confirmations`;
-        } else {
-          return `${duty} end @ :${minutes} - looking for confirmations`;
-        }
-      default:
-        return "error";
-    }
-  };
 
   useEffect(() => {
-    let countdown: number;
+    if (!activeShift) return;
+    if (timeLeft > 0) return;
 
-    if (active) {
-      countdown = setDriftlessInterval(() => {
-        setTimer((prevValue) => prevValue - 1);
-      }, 1000);
-      if (JSON.parse(localStorage.getItem("header") ?? "false")) {
-        document.title = `${minutes.toString().padStart(2, "0")}:${seconds
-          .toString()
-          .padStart(2, "0")} | Duty Tracker`;
-      } else {
-        document.title = "Duty Tracker";
-      }
-    }
-
-    if (active && timer === 0 && dutyPart < 2) {
-      updateDutyPart();
-    }
-
-    if (active && timer === 0 && dutyPart === 2) {
+    if (dutyPart === DutyPart.END) {
       if (JSON.parse(localStorage.getItem("continuous") ?? "false")) {
-        setDutyPart(0);
-        writeMessage(getCopyString(dutyPart));
+        writeMessage(getCopyString(dutyPart, duty));
       } else {
-        setActive(false);
-        setDutyPart(0);
-        writeMessage(getCopyString(dutyPart));
-        beep();
+        setActiveShift(false);
+        writeMessage(getCopyString(dutyPart, duty));
       }
+      setDutyPart(DutyPart.START);
     }
 
-    return () => {
-      clearDriftless(countdown);
-    };
-  }, [active, timer, dutyPart]);
-
-  useEffect(() => {
-    const d = new Date();
-    const minutes = d.getMinutes().toString().padStart(2, "0");
-
-    if (active && prevDuty !== "") {
-      writeMessage(`${prevDuty} > ${duty} @ :${minutes}`);
+    if (dutyPart === DutyPart.START) {
+      writeMessage(getCopyString(DutyPart.MID, duty));
+      setDutyPart(DutyPart.END);
+      return;
     }
-  }, [duty]);
+  }, [activeShift, timeLeft]);
+
+  const toggleShift = () => {
+    if (!worker) return;
+
+    if (activeShift) {
+      setActiveShift(false);
+      worker.postMessage({ turn: "off" });
+    } else {
+      setActiveShift(true);
+      writeMessage(getCopyString(dutyPart, duty));
+      worker.postMessage({ turn: "on" });
+      beep();
+    }
+  };
+
+  const changeDuty = (d: string) => {
+    const minutes = new Date().getMinutes().toString().padStart(2, "0");
+    if (activeShift) {
+      writeMessage(`${duty} > ${d} @ ${minutes}`);
+    }
+
+    setDuty(d);
+  };
+
+  const copyString = (message: string) => {
+    const parts = message.split(":");
+    const messageMinute = parseInt(parts[1].trim());
+    const currentMinute = new Date().getMinutes();
+    const difference = currentMinute - messageMinute;
+
+    if (currentMinute > messageMinute) {
+      navigator.clipboard.writeText(`${message} (OS by ${difference})`);
+    } else {
+      navigator.clipboard.writeText(message);
+    }
+  };
+
   return (
     <div className="flex flex-row gap-2 mt-4 justify-center">
       <section className="flex flex-col gap-4 max-w-screen-sm w-2/6 overflow-hidden">
         <Settings />
-        <Select onValueChange={handleDutyChange}>
+        <Select onValueChange={changeDuty}>
           <SelectTrigger>
             <SelectValue placeholder="Duty" />
           </SelectTrigger>
@@ -148,18 +123,19 @@ const App = () => {
             </SelectGroup>
           </SelectContent>
         </Select>
+
         <Button
           variant="secondary"
-          onClick={handleStartTimer}
+          onClick={toggleShift}
           disabled={duty === ""}
         >
           {duty === ""
             ? "Select a duty to start your shift"
-            : active
+            : activeShift
             ? "Stop shift"
             : "Start shift"}
         </Button>
-        {active &&
+        {activeShift &&
           `${minutes} minutes and ${seconds} seconds until next message`}
         {messages
           .slice(0)
@@ -176,7 +152,7 @@ const App = () => {
                 size="icon"
                 variant="ghost"
                 onClick={() => {
-                  navigator.clipboard.writeText(message);
+                  copyString(message);
                 }}
               >
                 <Clipboard />
